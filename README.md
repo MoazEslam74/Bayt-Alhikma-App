@@ -22,9 +22,11 @@ A comprehensive, bilingual (Arabic/English) digital library and social reading a
 * **Media & Documents:** `just_audio`, `dio`, `syncfusion_flutter_pdfviewer`
 * **External APIs:** Google Custom Search API
 
-## 📱 Screenshots
+## 📱 From the APP
 
-*(Include screenshots of your app here: Home Screen, PDF Reader, Audiobook Player, Chat Room, Profile, etc.)*
+<img src='1.png'>
+<img src='2.png'>
+<img src='3.png'>
 
 ## 🚀 Getting Started
 
