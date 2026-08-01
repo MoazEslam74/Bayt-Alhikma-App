@@ -79,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           child: AppBar(
+            
             title: Text(
               isArabicLocale ? 'بيت الحكمة' : 'Bayt Al-Hikma',
               style: TextStyle(

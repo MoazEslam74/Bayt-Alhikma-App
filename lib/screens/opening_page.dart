@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:bayt_alhikma/screens/home_screen.dart'; // Import Home
-import 'package:bayt_alhikma/screens/login_screen.dart'; // Import Login
 import 'package:bayt_alhikma/view_model/local_storage_services.dart'; // Import Service
 
 class OpeningPage extends StatefulWidget {
