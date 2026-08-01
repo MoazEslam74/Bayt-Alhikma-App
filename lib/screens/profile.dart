@@ -26,7 +26,8 @@ class _ProfileState extends State<Profile> {
   String username = '';
   String email = '';
   List<String> categories = [];
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
+  bool? _lastIsDark;
   // Default avatar
   String currentAvatar = '1.png';
 
@@ -124,33 +125,58 @@ class _ProfileState extends State<Profile> {
     },
   ];
 
-  void videoIntialization() {
-    final isDark = Provider.of<DarkModeProvider>(context, listen: false).isDark;
-    if(isDark) {
-      _controller = VideoPlayerController.asset('images/Astrolab_move_dark.mp4');
-    } else {
-      _controller = VideoPlayerController.asset('images/Astrolab_move_light.mp4');
+  void videoIntialization(bool isDark) async{
+    await Future.delayed(const Duration(milliseconds: 400));
+    try{
+    if (_controller != null) {
+      await _controller!.pause();
+      await _controller!.dispose();
     }
-    _controller.initialize().then((_) {
-      _controller.setVolume(0.0); // No sound
-      _controller.setLooping(true); // repeat the video
-      _controller.play(); // Auto play
 
-        setState(() {});
-      });
+    String videoPath = isDark 
+        ? 'images/Astrolab_move_dark.mp4' 
+        : 'images/Astrolab_move_light.mp4';
+
+    final newController = VideoPlayerController.asset(videoPath);
+    _controller = newController;
+
+    await newController.initialize();
+    newController.setVolume(0.0);
+    newController.setLooping(true);
+    newController.play();
+
+    if (mounted) {
+      setState(() {});
+    }}catch(e){
+      print("Error initializing video: $e");
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    videoIntialization();
+    
     _loadUserData();
   }
   @override
   void dispose() {
     
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    
+    final isDark = Provider.of<DarkModeProvider>(context).isDark;
+    
+    
+    if (_lastIsDark != isDark) {
+      _lastIsDark = isDark;
+      videoIntialization(isDark);
+    }
   }
   void _loadUserData() {
     final user = LocalStorageService.getUserLocally();
@@ -373,19 +399,19 @@ class _ProfileState extends State<Profile> {
           : AppStyles.pageBackground, // Main BG
       body: Stack(
         children: [
-          if (_controller.value.isInitialized)
-            SizedBox.expand( // لجعل الفيديو يملأ الشاشة بالكامل
+          if (_controller!.value.isInitialized)
+            SizedBox.expand(
               child: FittedBox(
-                fit: BoxFit.cover, // يمنع تشوه أبعاد الفيديو (يحافظ على نسبة الطول والعرض)
+                fit: BoxFit.cover, 
                 child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
+                  width: _controller!.value.size.width,
+                  height: _controller!.value.size.height,
+                  child: VideoPlayer(_controller!),
                 ),
               ),
             )
           else
-            // مؤشر تحميل يظهر في اللحظات الأولى قبل بدء تشغيل الفيديو
+            
             const Center(child: CircularProgressIndicator()),
           // Hide the background image in dark mode if it conflicts, or dim it
           // Positioned.fill(
@@ -397,13 +423,7 @@ class _ProfileState extends State<Profile> {
           //         Container(color: AppStyles.pageBackground),
           //   ),
           // ),
-          Positioned.fill(
-            child: Container(
-              color: isDark
-                  ? Colors.black.withOpacity(0.2)
-                  : Colors.white.withOpacity(0.06),
-            ),
-          ),
+          
           SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.all(16.0),

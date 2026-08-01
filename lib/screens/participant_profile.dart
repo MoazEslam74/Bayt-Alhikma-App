@@ -5,6 +5,7 @@ import 'package:bayt_alhikma/view_model/language_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ParticipantProfile extends StatefulWidget {
   final String username;
@@ -127,6 +128,13 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
     return null;
   }
 
+  Future <Map<String, dynamic>?> _sendReport() async {
+   try{
+
+   }catch(e){
+    print("Error sending report: $e");
+   }
+  }
   @override
   Widget build(BuildContext context) {
     bool isArabicLocale = Provider.of<LanguageProvider>(context).isArabic;
@@ -146,12 +154,12 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
               padding: const EdgeInsets.symmetric(vertical:8.0,horizontal: 2.0),
               margin: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 8.0),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: AppStyles.primaryGold.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8.0),
                 shape: BoxShape.rectangle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: AppStyles.primaryGold.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -168,18 +176,7 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
           Stack(
             children: [
                   // Background
-                  Positioned.fill(
-                    child: Image.asset(
-                      'images/astrolab.png',
-                      alignment: Alignment.bottomCenter,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: AppStyles.pageBackground),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Container(color: Colors.white.withOpacity(0.06)),
-                  ),
+                  
                 
                   // Content
                   FutureBuilder<Map<String, dynamic>?>(
@@ -453,4 +450,6 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
       ),
     );
   }
+
+  
 }
