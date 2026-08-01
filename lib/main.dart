@@ -44,7 +44,7 @@ class Routes {
   static const String recommended = '/recommended';
 }
 
-// تعريف الـ GlobalKey للـ Navigator عشان نقدر نتحكم في الشاشات من بره
+
 final GlobalKey<NavigatorState> globalNavigatorKey =
     GlobalKey<NavigatorState>();
 
@@ -56,10 +56,7 @@ Future<void> main() async {
   await LocalStorageService.init();
   await dotenv.load(fileName: ".env");
   
-  // ❌ قم بحذف هذا السطر تماماً
-  // runApp(const MyApp());
-
-  // ✅ الإبقاء على هذا الاستدعاء فقط
+  
   runApp(
     MultiProvider(
       providers: [

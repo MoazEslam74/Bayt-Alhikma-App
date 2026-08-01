@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bayt_alhikma/view_model/dark_mode.dart';
+import 'package:video_player/video_player.dart';
 import '../utils/styles.dart';
 
 class Profile extends StatefulWidget {
@@ -25,7 +26,7 @@ class _ProfileState extends State<Profile> {
   String username = '';
   String email = '';
   List<String> categories = [];
-
+  late VideoPlayerController _controller;
   // Default avatar
   String currentAvatar = '1.png';
 
@@ -123,12 +124,34 @@ class _ProfileState extends State<Profile> {
     },
   ];
 
+  void videoIntialization() {
+    final isDark = Provider.of<DarkModeProvider>(context, listen: false).isDark;
+    if(isDark) {
+      _controller = VideoPlayerController.asset('images/Astrolab_move_dark.mp4');
+    } else {
+      _controller = VideoPlayerController.asset('images/Astrolab_move_light.mp4');
+    }
+    _controller.initialize().then((_) {
+      _controller.setVolume(0.0); // No sound
+      _controller.setLooping(true); // repeat the video
+      _controller.play(); // Auto play
+
+        setState(() {});
+      });
+  }
+
   @override
   void initState() {
     super.initState();
+    videoIntialization();
     _loadUserData();
   }
-
+  @override
+  void dispose() {
+    
+    _controller.dispose();
+    super.dispose();
+  }
   void _loadUserData() {
     final user = LocalStorageService.getUserLocally();
     if (user != null) {
@@ -350,16 +373,30 @@ class _ProfileState extends State<Profile> {
           : AppStyles.pageBackground, // Main BG
       body: Stack(
         children: [
+          if (_controller.value.isInitialized)
+            SizedBox.expand( // لجعل الفيديو يملأ الشاشة بالكامل
+              child: FittedBox(
+                fit: BoxFit.cover, // يمنع تشوه أبعاد الفيديو (يحافظ على نسبة الطول والعرض)
+                child: SizedBox(
+                  width: _controller.value.size.width,
+                  height: _controller.value.size.height,
+                  child: VideoPlayer(_controller),
+                ),
+              ),
+            )
+          else
+            // مؤشر تحميل يظهر في اللحظات الأولى قبل بدء تشغيل الفيديو
+            const Center(child: CircularProgressIndicator()),
           // Hide the background image in dark mode if it conflicts, or dim it
-          Positioned.fill(
-            child: Image.asset(
-              'images/astrolab.png',
-              alignment: Alignment.bottomCenter,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Container(color: AppStyles.pageBackground),
-            ),
-          ),
+          // Positioned.fill(
+          //   child: Image.asset(
+          //     'images/astrolab.png',
+          //     alignment: Alignment.bottomCenter,
+          //     fit: BoxFit.cover,
+          //     errorBuilder: (_, __, ___) =>
+          //         Container(color: AppStyles.pageBackground),
+          //   ),
+          // ),
           Positioned.fill(
             child: Container(
               color: isDark
@@ -556,7 +593,7 @@ class _ProfileState extends State<Profile> {
                                                 : (dm.isDark
                                                       ? 'Dark Mode'
                                                       : 'Light Mode'),
-                                                      style: TextStyle(fontSize: 16),
+                                            style: TextStyle(fontSize: 16),
                                           ),
                                         ],
                                       ),
@@ -671,7 +708,10 @@ class _ProfileState extends State<Profile> {
                               children: [
                                 const Icon(Icons.security),
                                 const SizedBox(width: 4.0),
-                                Text(isArabicLocale ? 'الأمان' : 'Security',style: TextStyle( fontSize: 16),),
+                                Text(
+                                  isArabicLocale ? 'الأمان' : 'Security',
+                                  style: TextStyle(fontSize: 16),
+                                ),
                               ],
                             ),
                           ),

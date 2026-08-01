@@ -7,6 +7,7 @@ environment:
   sdk: ^3.8.1
 
 dependencies:
+  video_player: ^2.8.3
   webview_flutter: ^4.13.0
   cloud_firestore: ^6.1.0
   firebase_auth: ^6.1.2
@@ -44,6 +45,8 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - images/Astrolab_move_dark.mp4
+    - images/Astrolab_move_light.mp4
     - images/
     - images/avatars/1.png
     - images/avatars/2.png
