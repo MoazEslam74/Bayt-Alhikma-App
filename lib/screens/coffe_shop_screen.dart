@@ -60,6 +60,9 @@ class _CoffeeScreenState extends State<CoffeeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get current user from Hive
+    final currentUserProfile = LocalStorageService.getUserLocally();
+    final String currentUsername = currentUserProfile?.username ?? 'Guest';
     bool isDark = Provider.of<DarkModeProvider>(context).isDark;
     final titleText = isArabicLocale()
         ? "مقهى المكتبة"
@@ -134,9 +137,9 @@ class _CoffeeScreenState extends State<CoffeeScreen> {
                         final data = chat.data() as Map<String, dynamic>;
                         final participants =
                             data['participants'] as List? ?? [];
-
+                        final numOfParticipants = data['numOfParticipants'] ?? 0;
                         return InkWell(
-                          onTap: () => _joinAndOpenRoom(chat),
+                          onTap: () => participants.contains(currentUsername) ? _joinAndOpenRoom(chat):participants.length < numOfParticipants ?_joinAndOpenRoom(chat)  : _showChatError() ,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -238,6 +241,17 @@ class _CoffeeScreenState extends State<CoffeeScreen> {
       ),
     );
   }
+  void _showChatError(){
+    bool isArabicLocale([bool listen = true]) {
+      return Provider.of<LanguageProvider>(context, listen: listen).isArabic;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isArabicLocale() ? 'لا يمكن الانضمام، الغرفة ممتلئة' : 'Cannot join, room is full'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
 }
 
 // ==========================================
@@ -291,6 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  
   void _showParticipantsDialog() {
     
     bool isArabicLocale([bool listen = true]) {
