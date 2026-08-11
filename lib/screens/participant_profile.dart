@@ -1,8 +1,11 @@
 // lib/screens/participant_profile.dart
+import 'dart:core';
+
 import 'package:bayt_alhikma/screens/user_shelves_screen.dart';
 import 'package:bayt_alhikma/utils/styles.dart';
 import 'package:bayt_alhikma/view_model/language_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -111,6 +114,40 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
     },
   ];
 
+  Future<void> _reportUser(String reason) async {
+    try {
+      // Create a new document in the 'reports' collection
+      await FirebaseFirestore.instance.collection('reports').add({
+        'defendant': widget.username,
+        'reporter': FirebaseAuth.instance.currentUser!.email,
+        'reason': reason,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Show a confirmation message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Provider.of<LanguageProvider>(context, listen: false).isArabic
+                ? 'تم إرسال البلاغ بنجاح'
+                : 'Report sent successfully',
+          ),
+        ),
+      );
+    } catch (e) {
+      print("Error sending report: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Provider.of<LanguageProvider>(context, listen: false).isArabic
+                ? 'حدث خطأ أثناء إرسال البلاغ'
+                : 'Error sending report',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<Map<String, dynamic>?> _fetchUserProfile() async {
     try {
       final querySnapshot = await FirebaseFirestore.instance
@@ -128,13 +165,12 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
     return null;
   }
 
-  Future <Map<String, dynamic>?> _sendReport() async {
-   try{
-
-   }catch(e){
-    print("Error sending report: $e");
-   }
+  Future<Map<String, dynamic>?> _sendReport() async {
+    try {} catch (e) {
+      print("Error sending report: $e");
+    }
   }
+
   @override
   Widget build(BuildContext context) {
     bool isArabicLocale = Provider.of<LanguageProvider>(context).isArabic;
@@ -148,11 +184,17 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
         children: [
           InkWell(
             onTap: () {
-              // Handle report button press
+              _showReportScreen();
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical:8.0,horizontal: 2.0),
-              margin: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 2.0,
+              ),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 50.0,
+                vertical: 8.0,
+              ),
               decoration: BoxDecoration(
                 color: AppStyles.primaryGold.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8.0),
@@ -167,189 +209,195 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children:[
-                
-                Icon(Icons.report, color: Colors.red),
-                Text('Report the user: ${widget.username}',style:TextStyle(fontSize:14,),),
-              ]),
-            )),
+                children: [
+                  Icon(Icons.report, color: Colors.red),
+                  Text(
+                    isArabicLocale
+                        ? 'تبليغ: ${widget.username}'
+                        : 'Report: ${widget.username}',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Stack(
             children: [
-                  // Background
-                  
-                
-                  // Content
-                  FutureBuilder<Map<String, dynamic>?>(
-                    future: _fetchUserProfile(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                
-                      if (!snapshot.hasData || snapshot.data == null) {
-                        return Center(
-                          child: Text(
-                            isArabicLocale ? 'مستخدم غير موجود' : 'User not found',
-                          ),
-                        );
-                      }
-                
-                      final data = snapshot.data!;
-                
-                      // ==========================================
-                      // NEW: Check for Security Status
-                      // ==========================================
-                      final bool isSecure = data['secure'] ?? false;
-                
-                      if (!isSecure) {
-                        return Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            height: MediaQuery.of(context).size.height * 0.5,
+              // Background
+
+              // Content
+              FutureBuilder<Map<String, dynamic>?>(
+                future: _fetchUserProfile(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (!snapshot.hasData || snapshot.data == null) {
+                    return Center(
+                      child: Text(
+                        isArabicLocale ? 'مستخدم غير موجود' : 'User not found',
+                      ),
+                    );
+                  }
+
+                  final data = snapshot.data!;
+
+                  // ==========================================
+                  // NEW: Check for Security Status
+                  // ==========================================
+                  final bool isSecure = data['secure'] ?? false;
+
+                  if (!isSecure) {
+                    return Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 80,
+                              color: AppStyles.primaryGold,
+                            ),
+
+                            const SizedBox(height: 16),
+                            Text(
+                              isArabicLocale
+                                  ? "هذا الحساب محمي"
+                                  : "The account is secured",
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: AppStyles.primaryGold,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  // ==========================================
+
+                  final firstname = data['firstname'] ?? '';
+                  final lastname = data['lastname'] ?? '';
+                  final email = data['email'] ?? '';
+                  final List<dynamic> cats = data['categories'] ?? [];
+                  final categories = cats.join(", ");
+                  final String avatarName = data['avatar'] ?? '1.png';
+                  final List<String> bookIDs = List<String>.from(
+                    data['favorites'] ?? [],
+                  );
+                  print('Book IDs for ${widget.username}: $bookIDs');
+                  // Resolve Avatar URL
+                  final String? avatarUrl = avatars.firstWhere(
+                    (a) => a['name'] == avatarName,
+                    orElse: () => {},
+                  )['link'];
+
+                  final String finalAvatarUrl =
+                      avatarUrl ??
+                      'https://archive.org/download/3_20251215_20251215_1250/$avatarName';
+
+                  return SingleChildScrollView(
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          // Avatar
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 20.0),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(8.0),
-                
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppStyles.primaryGold,
+                                width: 2.0,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
+                                  color: Colors.black.withOpacity(0.1),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.lock_outline,
-                                  size: 80,
-                                  color: AppStyles.primaryGold,
-                                ),
-                
-                                const SizedBox(height: 16),
-                                Text(
-                                  isArabicLocale
-                                      ? "هذا الحساب محمي"
-                                      : "The account is secured",
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    color: AppStyles.primaryGold,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            child: CircleAvatar(
+                              radius: 80,
+                              backgroundColor: Colors.transparent,
+                              backgroundImage: NetworkImage(finalAvatarUrl),
+                              onBackgroundImageError: (_, __) {},
                             ),
                           ),
-                        );
-                      }
-                      // ==========================================
-                
-                      final firstname = data['firstname'] ?? '';
-                      final lastname = data['lastname'] ?? '';
-                      final email = data['email'] ?? '';
-                      final List<dynamic> cats = data['categories'] ?? [];
-                      final categories = cats.join(", ");
-                      final String avatarName = data['avatar'] ?? '1.png';
-                      final List<String> bookIDs = List<String>.from(
-                        data['favorites'] ?? [],
-                      );
-                      print('Book IDs for ${widget.username}: $bookIDs');
-                      // Resolve Avatar URL
-                      final String? avatarUrl = avatars.firstWhere(
-                        (a) => a['name'] == avatarName,
-                        orElse: () => {},
-                      )['link'];
-                
-                      final String finalAvatarUrl =
-                          avatarUrl ??
-                          'https://archive.org/download/3_20251215_20251215_1250/$avatarName';
-                
-                      return SingleChildScrollView(
-                        child: Container(
-                          padding: const EdgeInsets.all(16.0),
-                          width: double.infinity,
-                          child: Column(
-                            children: [
-                              // Avatar
-                              Container(
-                                margin: const EdgeInsets.symmetric(vertical: 20.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppStyles.primaryGold,
-                                    width: 2.0,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: CircleAvatar(
-                                  radius: 80,
-                                  backgroundColor: Colors.transparent,
-                                  backgroundImage: NetworkImage(finalAvatarUrl),
-                                  onBackgroundImageError: (_, __) {},
-                                ),
+
+                          // Info Box
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(
+                                color: AppStyles.primaryGold,
+                                width: 2.0,
                               ),
-                
-                              // Info Box
-                              Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  border: Border.all(
-                                    color: AppStyles.primaryGold,
-                                    width: 2.0,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _infoRow(
+                                    isArabicLocale
+                                        ? 'اسم المستخدم:'
+                                        : 'Username:',
+                                    widget.username,
                                   ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _infoRow(
-                                        isArabicLocale ? 'اسم المستخدم:' : 'Username:',
-                                        widget.username,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _infoRow(
-                                        isArabicLocale ? 'الاسم الكامل:' : 'Name:',
-                                        '$firstname $lastname',
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _infoRow(
-                                        isArabicLocale ? 'البريد:' : 'Email:',
-                                        email,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _infoRow(
-                                        isArabicLocale ? 'الفئات:' : 'Categories:',
-                                        categories.isEmpty ? '-' : categories,
-                                      ),
-                                    ],
+                                  const SizedBox(height: 12),
+                                  _infoRow(
+                                    isArabicLocale ? 'الاسم الكامل:' : 'Name:',
+                                    '$firstname $lastname',
                                   ),
-                                ),
+                                  const SizedBox(height: 12),
+                                  _infoRow(
+                                    isArabicLocale ? 'البريد:' : 'Email:',
+                                    email,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _infoRow(
+                                    isArabicLocale ? 'الفئات:' : 'Categories:',
+                                    categories.isEmpty ? '-' : categories,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 24),
-                              UserShelves(widget.username, bookIDs),
-                            ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                          const SizedBox(height: 24),
+                          UserShelves(widget.username, bookIDs),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
+            ],
+          ),
         ],
       ),
-        
-      );
+    );
   }
 
   Widget _infoRow(String label, String value) {
@@ -451,5 +499,40 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
     );
   }
 
-  
+  void _showReportScreen() {
+    bool isArabicLocale([bool listen = true]) {
+      return Provider.of<LanguageProvider>(context, listen: listen).isArabic;
+    }
+    String reportReason = '';
+    showDialog(context: context, builder: (ctx){
+      return AlertDialog(
+        title: Text(isArabicLocale() ? 'تبليغ عن المستخدم' : 'Report User'),
+        content: TextField(
+          decoration: InputDecoration(
+            hintText: isArabicLocale() ? 'أدخل سبب البلاغ' : 'Enter reason for report',
+          ),
+          onChanged: (value) {
+            reportReason = value;
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+            child: Text(isArabicLocale() ? 'إلغاء' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Call the report function here with the reason
+              _reportUser(reportReason);
+              Navigator.of(ctx).pop();
+            },
+            child: Text(isArabicLocale() ? 'إرسال' : 'Submit'),
+          ),
+        ],
+      );
+    });
+    
+  }
 }
