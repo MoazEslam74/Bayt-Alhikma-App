@@ -142,7 +142,7 @@ class _CoffeeScreenState extends State<CoffeeScreen> {
                           onTap: () => participants.contains(currentUsername) ? _joinAndOpenRoom(chat):participants.length < numOfParticipants ?_joinAndOpenRoom(chat)  : _showChatError() ,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
+                              horizontal: 12, 
                               vertical: 16,
                             ),
                             decoration: BoxDecoration(
