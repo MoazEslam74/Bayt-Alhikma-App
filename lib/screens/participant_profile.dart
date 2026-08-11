@@ -506,9 +506,10 @@ class _ParticipantProfileState extends State<ParticipantProfile> {
     String reportReason = '';
     showDialog(context: context, builder: (ctx){
       return AlertDialog(
-        title: Text(isArabicLocale() ? 'تبليغ عن المستخدم' : 'Report User'),
+        title: Text(isArabicLocale() ? 'تبليغ عن المستخدم' : 'Report User',style: TextStyle(fontSize: 16),),
         content: TextField(
           decoration: InputDecoration(
+            hintStyle: TextStyle(fontSize: 14),
             hintText: isArabicLocale() ? 'أدخل سبب البلاغ' : 'Enter reason for report',
           ),
           onChanged: (value) {
